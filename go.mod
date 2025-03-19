@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/CodeClarityCE/utility-types v0.0.2-alpha
+	github.com/CodeClarityCE/utility-types v0.0.3-alpha
 	github.com/lib/pq v1.10.9
 	github.com/uptrace/bun v1.2.11
 	github.com/uptrace/bun/dialect/pgdialect v1.2.11
