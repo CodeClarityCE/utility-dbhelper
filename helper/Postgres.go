@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	config "github.com/CodeClarityCE/utility-types/config_db"
 	plugin "github.com/CodeClarityCE/utility-types/plugin_db"
@@ -187,10 +186,6 @@ func CreateTable(dbName string) error {
 
 func createConfigTable(db *bun.DB) error {
 	db.NewCreateTable().Model((*config.Config)(nil)).IfNotExists().Exec(context.Background())
-	db.NewInsert().Model(&config.Config{
-		NvdLast: time.Date(2005, 1, 1, 0, 0, 0, 0, time.UTC),
-		NpmLast: "0",
-	}).Exec(context.Background())
 	return nil
 }
 
