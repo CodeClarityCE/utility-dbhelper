@@ -3,7 +3,7 @@ module github.com/CodeClarityCE/utility-dbhelper
 go 1.24.3
 
 require (
-	github.com/CodeClarityCE/utility-types v0.0.11-alpha
+	github.com/CodeClarityCE/utility-types v0.0.12-alpha
 	github.com/lib/pq v1.10.9
 	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/dialect/pgdialect v1.2.15
@@ -14,7 +14,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
-	github.com/stretchr/testify v1.11.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
