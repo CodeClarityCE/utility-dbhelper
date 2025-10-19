@@ -3,7 +3,7 @@ module github.com/CodeClarityCE/utility-dbhelper
 go 1.24.3
 
 require (
-	github.com/CodeClarityCE/utility-types v0.0.13-alpha
+	github.com/CodeClarityCE/utility-types v0.0.14-alpha
 	github.com/lib/pq v1.10.9
 	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/dialect/pgdialect v1.2.15
