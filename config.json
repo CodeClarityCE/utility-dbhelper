@@ -1,0 +1,7 @@
+{
+    "name": "db-helper",
+    "version": "v0.0.12-alpha",
+    "description": "Database helper utilities for CodeClarity backend services",
+    "author": "CodeClarity Team",
+    "license": "AGPL-3.0"
+}
