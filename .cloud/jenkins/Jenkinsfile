@@ -9,7 +9,6 @@ pipeline {
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-credentials')
         GOPRIVATE = 'github.com/CodeClarityCE/*'
     }
 
@@ -80,11 +79,6 @@ pipeline {
                 script {
                     def tagExists = sh(script: "git tag -l '${Version}' | grep -q .", returnStatus: true) == 0
                     if (!tagExists) {
-                        sh """
-                            git config user.email 'jenkins@codeclarity.io'
-                            git config user.name 'Jenkins CI'
-                            git tag -a '${Version}' -m 'Release ${Version}'
-                        """
                         sh "gh release create '${Version}' --title 'Release ${Version}' --generate-notes --prerelease=\$(echo '${Version}' | grep -q 'alpha\\|beta' && echo true || echo false)"
                     }
                 }
