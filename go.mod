@@ -1,10 +1,10 @@
 module github.com/CodeClarityCE/utility-dbhelper
 
-go 1.24.3
+go 1.25.7
 
 require (
-	github.com/CodeClarityCE/utility-types v0.0.15-alpha
-	github.com/lib/pq v1.10.9
+	github.com/CodeClarityCE/utility-types v0.0.18-alpha
+	github.com/lib/pq v1.11.1
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/pgdialect v1.2.16
 	github.com/uptrace/bun/driver/pgdriver v1.2.16
@@ -18,9 +18,9 @@ require (
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	go.opentelemetry.io/otel v1.39.0 // indirect
-	go.opentelemetry.io/otel/trace v1.39.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	go.opentelemetry.io/otel v1.40.0 // indirect
+	go.opentelemetry.io/otel/trace v1.40.0 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )
