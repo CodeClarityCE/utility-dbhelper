@@ -31,7 +31,7 @@ func CreatePostgresDatabase(dbName string, host string, port string, user string
 
 	pg_connection.Close()
 
-	conninfo = fmt.Sprintf("user=%s password=%s host=%s port=%s database=%s sslmode=disable", user, password, host, port, dbName)
+	conninfo = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", user, password, host, port, dbName)
 	pg_connection, err = sql.Open("postgres", conninfo)
 	if err != nil {
 		log.Fatal(err)
@@ -66,7 +66,7 @@ func RecreatePostgresDatabase(dbName string, host string, port string, user stri
 	}
 	pg_connection.Close()
 
-	conninfo = fmt.Sprintf("user=%s password=%s host=%s port=%s database=%s sslmode=disable", user, password, host, port, dbName)
+	conninfo = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", user, password, host, port, dbName)
 	pg_connection, err = sql.Open("postgres", conninfo)
 	if err != nil {
 		log.Fatal(err)

@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	github.com/CodeClarityCE/utility-types v0.0.19-alpha
-	github.com/lib/pq v1.11.1
+	github.com/lib/pq v1.11.2
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/pgdialect v1.2.16
 	github.com/uptrace/bun/driver/pgdriver v1.2.16
@@ -20,7 +20,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/otel v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )
