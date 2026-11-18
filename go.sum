@@ -1,5 +1,5 @@
-github.com/CodeClarityCE/utility-types v0.0.23-alpha h1:ttfDhpgITpb0jZmKnjnwglHgwGZtTyODCtGiFuJHUKk=
-github.com/CodeClarityCE/utility-types v0.0.23-alpha/go.mod h1:sK7bxNhjC0FcXItepuja6qFzv2AmnVo3QlRg0Ve9unc=
+github.com/CodeClarityCE/utility-types v0.0.24-alpha h1:iki/Ku/SC98miMimqvZBUsqV3YMcuonh8tedM0M5WSE=
+github.com/CodeClarityCE/utility-types v0.0.24-alpha/go.mod h1:D+Pf8vvl3+eRAuEfT44+by6nk9ry8k8Ivw8504+b0ao=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
