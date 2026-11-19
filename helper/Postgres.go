@@ -15,6 +15,7 @@ import (
 	config "github.com/CodeClarityCE/utility-types/config_db"
 	plugin "github.com/CodeClarityCE/utility-types/plugin_db"
 	"github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -89,9 +90,17 @@ func BuildDSN(user, password, host, port, dbName string) string {
 // based on PG_DB_SSLMODE. This bypasses pgdriver's DSN-based SSL parsing, which
 // can silently fall back to non-TLS on cert loading errors.
 func BuildPgdriverTLSOption() pgdriver.Option {
+	return buildPgdriverTLSOption(logrus.StandardLogger())
+}
+
+// buildPgdriverTLSOption is BuildPgdriverTLSOption with the logger passed in.
+func buildPgdriverTLSOption(log logrus.FieldLogger) pgdriver.Option {
 	sslMode := GetSSLMode()
 	switch sslMode {
 	case "require":
+		// require encrypts without checking the certificate, as in libpq.
+		log.WithFields(logrus.Fields{"component": "postgres", "ssl_mode": "require"}).
+			Warn("Postgres TLS does not verify the server certificate in require mode; use verify-ca")
 		return pgdriver.WithTLSConfig(&tls.Config{
 			InsecureSkipVerify: true,
 		})
