@@ -102,7 +102,7 @@ func buildPgdriverTLSOption(log logrus.FieldLogger) pgdriver.Option {
 		log.WithFields(logrus.Fields{"component": "postgres", "ssl_mode": "require"}).
 			Warn("Postgres TLS does not verify the server certificate in require mode; use verify-ca")
 		return pgdriver.WithTLSConfig(&tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint:gosec // libpq's require mode: encrypt without verifying, warned above
 		})
 	case "verify-ca", "verify-full":
 		tlsConfig := &tls.Config{}
@@ -110,7 +110,7 @@ func buildPgdriverTLSOption(log logrus.FieldLogger) pgdriver.Option {
 			tlsConfig.ServerName = host
 		}
 		if rootCert := os.Getenv("PG_DB_SSLROOTCERT"); rootCert != "" {
-			if caCert, err := os.ReadFile(rootCert); err == nil {
+			if caCert, err := os.ReadFile(rootCert); err == nil { //nolint:gosec // CA path set by the operator, like libpq's sslrootcert
 				pool := x509.NewCertPool()
 				pool.AppendCertsFromPEM(caCert)
 				tlsConfig.RootCAs = pool
@@ -136,38 +136,45 @@ func getAdminCredentials() (string, string) {
 	return user, password
 }
 
+// withConn opens conninfo, runs fn and closes the connection, returning the first error.
+func withConn(conninfo string, fn func(*sql.DB) error) (err error) {
+	conn, err := sql.Open("postgres", conninfo)
+	if err != nil {
+		return fmt.Errorf("failed to open connection: %w", err)
+	}
+	defer func() {
+		if closeErr := conn.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("failed to close connection: %w", closeErr)
+		}
+	}()
+	return fn(conn)
+}
+
+// installUUIDExtension adds uuid-ossp to the database dbName.
+func installUUIDExtension(dbName string, host string, port string, user string, password string) error {
+	return withConn(BuildConnInfo(user, password, host, port, dbName), func(conn *sql.DB) error {
+		if _, err := conn.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"); err != nil {
+			return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
+		}
+		return nil
+	})
+}
+
 func CreatePostgresDatabase(dbName string, host string, port string, user string, password string) error {
 	if err := validateDatabaseName(dbName); err != nil {
 		return err
 	}
 
-	conninfo := BuildConnInfo(user, password, host, port, "")
-	pg_connection, err := sql.Open("postgres", conninfo)
+	err := withConn(BuildConnInfo(user, password, host, port, ""), func(conn *sql.DB) error {
+		if _, err := conn.Exec("CREATE DATABASE " + pq.QuoteIdentifier(dbName)); err != nil {
+			return fmt.Errorf("failed to create database %s: %w", dbName, err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to open connection: %w", err)
+		return err
 	}
-
-	_, err = pg_connection.Exec("CREATE DATABASE " + pq.QuoteIdentifier(dbName))
-	if err != nil {
-		pg_connection.Close()
-		return fmt.Errorf("failed to create database %s: %w", dbName, err)
-	}
-
-	pg_connection.Close()
-
-	conninfo = BuildConnInfo(user, password, host, port, dbName)
-	pg_connection, err = sql.Open("postgres", conninfo)
-	if err != nil {
-		return fmt.Errorf("failed to open connection to new database: %w", err)
-	}
-	defer pg_connection.Close()
-
-	_, err = pg_connection.Query("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	if err != nil {
-		return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
-	}
-
-	return nil
+	return installUUIDExtension(dbName, host, port, user, password)
 }
 
 func RecreatePostgresDatabase(dbName string, host string, port string, user string, password string) error {
@@ -175,37 +182,19 @@ func RecreatePostgresDatabase(dbName string, host string, port string, user stri
 		return err
 	}
 
-	conninfo := BuildConnInfo(user, password, host, port, "")
-	pg_connection, err := sql.Open("postgres", conninfo)
+	err := withConn(BuildConnInfo(user, password, host, port, ""), func(conn *sql.DB) error {
+		if _, err := conn.Exec("DROP DATABASE " + pq.QuoteIdentifier(dbName)); err != nil {
+			return fmt.Errorf("failed to drop database %s: %w", dbName, err)
+		}
+		if _, err := conn.Exec("CREATE DATABASE " + pq.QuoteIdentifier(dbName)); err != nil {
+			return fmt.Errorf("failed to create database %s: %w", dbName, err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to open connection: %w", err)
+		return err
 	}
-
-	_, err = pg_connection.Exec("DROP DATABASE " + pq.QuoteIdentifier(dbName))
-	if err != nil {
-		pg_connection.Close()
-		return fmt.Errorf("failed to drop database %s: %w", dbName, err)
-	}
-
-	_, err = pg_connection.Exec("CREATE DATABASE " + pq.QuoteIdentifier(dbName))
-	if err != nil {
-		pg_connection.Close()
-		return fmt.Errorf("failed to create database %s: %w", dbName, err)
-	}
-	pg_connection.Close()
-
-	conninfo = BuildConnInfo(user, password, host, port, dbName)
-	pg_connection, err = sql.Open("postgres", conninfo)
-	if err != nil {
-		return fmt.Errorf("failed to open connection to new database: %w", err)
-	}
-	defer pg_connection.Close()
-
-	_, err = pg_connection.Query("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	if err != nil {
-		return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
-	}
-	return nil
+	return installUUIDExtension(dbName, host, port, user, password)
 }
 
 func CreateDatabase(dbName string, confirm bool) error {
@@ -231,19 +220,14 @@ func CreateDatabase(dbName string, confirm bool) error {
 		return fmt.Errorf("PG_DB_PASSWORD (or PG_DB_ADMIN_PASSWORD) is not set")
 	}
 
-	dsn := BuildDSN(user, password, host, port, dbName)
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn), BuildPgdriverTLSOption()))
-
-	db := bun.NewDB(sqldb, pgdialect.New())
-	defer db.Close()
-
 	// If the database doesn't exist, create it
-	if err := db.Ping(); err != nil {
-		db.Close()
-		err = CreatePostgresDatabase(dbName, host, port, user, password)
+	exists, err := databaseExists(BuildConnInfo(user, password, host, port, ""), dbName)
+	if err != nil {
 		return err
 	}
-	db.Close()
+	if !exists {
+		return CreatePostgresDatabase(dbName, host, port, user, password)
+	}
 
 	confirmation := "y"
 	// If confirmation asked
@@ -265,6 +249,18 @@ func CreateDatabase(dbName string, confirm bool) error {
 	log.Printf("Deleting database %s", dbName)
 
 	return RecreatePostgresDatabase(dbName, host, port, user, password)
+}
+
+// databaseExists reports whether the server at conninfo has a database named name.
+func databaseExists(conninfo, name string) (bool, error) {
+	var found bool
+	err := withConn(conninfo, func(conn *sql.DB) error {
+		return conn.QueryRow("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)", name).Scan(&found)
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to check whether database %s exists: %w", name, err)
+	}
+	return found, nil
 }
 
 func CreateTable(dbName string) error {
@@ -295,17 +291,16 @@ func CreateTable(dbName string) error {
 	db := bun.NewDB(sqldb, pgdialect.New())
 	defer db.Close()
 
-	if dbName == Config.Database.Config {
-		err := createConfigTable(db)
-		if err != nil {
+	switch dbName {
+	case Config.Database.Config:
+		if err := createConfigTable(db); err != nil {
 			return err
 		}
-	} else if dbName == Config.Database.Plugins {
-		err := createPluginTable(db)
-		if err != nil {
+	case Config.Database.Plugins:
+		if err := createPluginTable(db); err != nil {
 			return err
 		}
-	} else {
+	default:
 		return fmt.Errorf("unknown database name %s", dbName)
 	}
 

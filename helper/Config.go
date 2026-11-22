@@ -92,6 +92,7 @@ type Graph struct {
 	User_notifications string
 }
 
+//nolint:gosec // table names such as API_KEYS, not credentials
 var Config Configuration = Configuration{
 	Database: Database{
 		Knowledge: "knowledge",
