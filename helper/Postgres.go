@@ -221,7 +221,11 @@ func CreateDatabase(dbName string, confirm bool) error {
 	}
 
 	// If the database doesn't exist, create it
-	if !databaseExists(BuildDSN(user, password, host, port, dbName)) {
+	exists, err := databaseExists(BuildConnInfo(user, password, host, port, ""), dbName)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		return CreatePostgresDatabase(dbName, host, port, user, password)
 	}
 
@@ -247,11 +251,16 @@ func CreateDatabase(dbName string, confirm bool) error {
 	return RecreatePostgresDatabase(dbName, host, port, user, password)
 }
 
-// databaseExists reports whether a connection to dsn succeeds; the connection is closed before returning.
-func databaseExists(dsn string) bool {
-	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn), BuildPgdriverTLSOption()))
-	defer db.Close()
-	return db.Ping() == nil
+// databaseExists reports whether the server at conninfo has a database named name.
+func databaseExists(conninfo, name string) (bool, error) {
+	var found bool
+	err := withConn(conninfo, func(conn *sql.DB) error {
+		return conn.QueryRow("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)", name).Scan(&found)
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to check whether database %s exists: %w", name, err)
+	}
+	return found, nil
 }
 
 func CreateTable(dbName string) error {

@@ -80,3 +80,21 @@ func TestCreateAndRecreateDatabaseLeaveNoConnectionOpen(t *testing.T) {
 
 	mustDrop(t, server, name)
 }
+
+func TestDatabaseExistsChecksTheCatalog(t *testing.T) {
+	host, port, user, password := pgServer(t)
+	server := BuildConnInfo(user, password, host, port, "")
+
+	found, err := databaseExists(server, "postgres")
+	if err != nil || !found {
+		t.Fatalf("postgres: found=%v err=%v, want found", found, err)
+	}
+	found, err = databaseExists(server, "dbhelper_missing_database")
+	if err != nil || found {
+		t.Fatalf("missing database: found=%v err=%v, want not found", found, err)
+	}
+	// A server that cannot be reached is an error, not a missing database.
+	if _, err := databaseExists(BuildConnInfo(user, password, host, "1", ""), "postgres"); err == nil {
+		t.Fatal("unreachable server: want an error")
+	}
+}
